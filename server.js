@@ -8,13 +8,14 @@ var app = express();
     Basic routing
 */
 
-// https://cryptic-ridge-9197.herokuapp.com/api/imagesearch/lolcats%20funny?offset=10
+// https://api-projects-generalwellbeing.c9users.io/api/imagesearch/lolcats%20funny?offset=10
 app.get('/api/imagesearch/:search_string', function(req, res) {
     var query = req.params.search_string;
+    var offset = req.query.offset;
 
     res.setHeader('Content-Type', 'application/json');
     
-    
+
 });
 
 app.get('/api/latest/imagesearch/', function(req, res) {

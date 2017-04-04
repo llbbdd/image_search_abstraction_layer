@@ -5,7 +5,8 @@ var mongo = require('mongodb');
 var port = 8080;
 var apiKey = "4999273-5208c8f575b06301185d523f6";
 var resultsPerPage = 10;
-var requiredFields = ["webformatURL", "tags", "pageURL"];
+var searchResultsRequiredFields = ["webformatURL", "tags", "pageURL"];
+var searchTermsRequiredFields = ["query", "when"];
 var mongoDatabase = "mongodb://localhost:27017/image_search";
 var mongoCollection = "searches";
 
@@ -20,16 +21,17 @@ app.get('/api/imagesearch/:search_string', function(req, res) {
     var query = req.params.search_string;
     var offset = req.query.offset;
 
-    var results = getResults(query, offset, function(results){
+    getResults(query, offset, function(results){
         res.setHeader('Content-Type', 'application/json');
-        res.send(stripProperties(results, requiredFields));
+        res.send(stripProperties(results, searchResultsRequiredFields));
     });
 });
 
 app.get('/api/latest/imagesearch/', function(req, res) {
-    res.setHeader('Content-Type', 'application/json');
-    
-
+    databaseAccess(dbFind, null, function(results){
+        res.setHeader('Content-Type', 'application/json');
+        res.send(JSON.stringify(results.slice(0, 9), searchTermsRequiredFields));
+    });
 });
 
 app.listen(port, function () {
@@ -51,14 +53,14 @@ function getResults(query, offset, callback){
     });
 }
 
-function stripProperties(data, requiredFields){
+function stripProperties(data, searchResultsRequiredFields){
     var hits = data.hits;
     
     for (var searchHits in hits) {
         var keyArray = Object.keys(hits[searchHits]);
         
         for(var key in keyArray) {
-            if(requiredFields.indexOf(keyArray[key]) == -1){
+            if(searchResultsRequiredFields.indexOf(keyArray[key]) == -1){
                 delete hits[searchHits][keyArray[key]];
             }
         }
@@ -77,7 +79,7 @@ function basicError(message, error){
 */
 
 function addQuery(query){
-    databaseAccess(dbAdd, {'query': query}, function(result){});
+    databaseAccess(dbAdd, {'query': query, 'when': new Date()}, function(result){});
 }
 
 /*

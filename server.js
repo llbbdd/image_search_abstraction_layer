@@ -23,14 +23,14 @@ app.get('/api/imagesearch/:search_string', function(req, res) {
 
     getResults(query, offset, function(results){
         res.setHeader('Content-Type', 'application/json');
-        res.send(stripProperties(results, searchResultsRequiredFields));
+        res.send(JSON.stringify(results));
     });
 });
 
 app.get('/api/latest/imagesearch/', function(req, res) {
-    databaseAccess(dbFind, null, function(results){
+    getQueries(function(results){
         res.setHeader('Content-Type', 'application/json');
-        res.send(JSON.stringify(results.slice(0, 9), searchTermsRequiredFields));
+        res.send(JSON.stringify(results));
     });
 });
 
@@ -49,24 +49,22 @@ function getResults(query, offset, callback){
         
         addQuery(query);
         
-        callback(json);
+        callback(stripProperties(json.hits, searchResultsRequiredFields));
     });
 }
 
 function stripProperties(data, searchResultsRequiredFields){
-    var hits = data.hits;
-    
-    for (var searchHits in hits) {
-        var keyArray = Object.keys(hits[searchHits]);
+    for (var searchHits in data) {
+        var keyArray = Object.keys(data[searchHits]);
         
         for(var key in keyArray) {
             if(searchResultsRequiredFields.indexOf(keyArray[key]) == -1){
-                delete hits[searchHits][keyArray[key]];
+                delete data[searchHits][keyArray[key]];
             }
         }
     }
     
-    return hits;
+    return data;
 }
 
 function basicError(message, error){
@@ -79,7 +77,13 @@ function basicError(message, error){
 */
 
 function addQuery(query){
-    databaseAccess(dbAdd, {'query': query, 'when': new Date()}, function(result){});
+    databaseAccess(dbAdd, {'query': query, 'when': new Date()}, function(results){});
+}
+
+function getQueries(callback){
+    databaseAccess(dbFind, null, function(results){
+        callback(stripProperties(results.slice(0, 9), searchTermsRequiredFields));
+    });
 }
 
 /*

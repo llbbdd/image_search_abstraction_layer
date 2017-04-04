@@ -1,12 +1,16 @@
 var express = require('express');
 var request = require('request');
+var mongo = require('mongodb');
 
 var port = 8080;
 var apiKey = "4999273-5208c8f575b06301185d523f6";
 var resultsPerPage = 10;
 var requiredFields = ["webformatURL", "tags", "pageURL"];
+var mongoDatabase = "mongodb://localhost:27017/image_search";
+var mongoCollection = "searches";
 
 var app = express();
+mongo.MongoClient;
 
 /*
     Basic routing
@@ -41,6 +45,8 @@ function getResults(query, offset, callback){
             throw err;
         }
         
+        addQuery(query);
+        
         callback(json);
     });
 }
@@ -59,4 +65,67 @@ function stripProperties(data, requiredFields){
     }
     
     return hits;
+}
+
+function basicError(message, error){
+    console.log(message);
+    console.log(error);
+}
+
+/*
+    Project specific database functions
+*/
+
+function addQuery(query){
+    databaseAccess(dbAdd, {'query': query}, function(result){});
+}
+
+/*
+    Generic database functions
+*/
+
+// databaseAccess use examples:
+// find all records
+/*databaseAccess(dbFind, null, function(results){
+    console.log(results);
+});*/
+// find record where short = 2cf2370e
+/*databaseAccess(dbFind, {"short": "2cf2370e"}, function(results){
+    console.log(results);
+});*/
+
+function databaseAccess(operationFunction, data, callback){
+    mongo.connect(mongoDatabase, function(err, db) {
+        if(err){
+            basicError("Database error - Can't connect to database", err);
+        }
+        else{
+            operationFunction(db, data, function(resultsArray){
+                callback(resultsArray);
+            });
+        }
+        
+        db.close();
+    });
+}
+
+function dbFind(db, data, callback){
+    db.collection(mongoCollection).find(data).toArray(function(err, sites) {
+        if(err){
+            basicError("Database error - Can't get records", err);
+        }
+        else{
+            callback(sites);
+        }
+    });
+}
+
+function dbAdd(db, data, callback){
+    db.collection(mongoCollection).insert(data, function(err, data) {
+        if(err){
+            basicError("Database error - Can't insert site", err);
+        }
+    });
+    
+    callback(data);
 }

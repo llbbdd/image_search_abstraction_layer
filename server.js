@@ -43,8 +43,8 @@ function getResults(query, offset, callback){
     var url = "https://pixabay.com/api/?key=" + apiKey + "&q=" + query + "&page=" + offset + "&per_page=" + resultsPerPage;
 
     request({url: url, json: true}, function(err, res, json) {
-        if (err) {
-            throw err;
+        if(err) {
+            basicError("Pixabay API error - Can't get results", err);
         }
         
         addQuery(query);

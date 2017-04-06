@@ -69,7 +69,7 @@ function stripProperties(data, searchResultsRequiredFields){
 
 function basicError(message, error){
     console.log(message);
-    console.log(error);
+    throw error;
 }
 
 /*
